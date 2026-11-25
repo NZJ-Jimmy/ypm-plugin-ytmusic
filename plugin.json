@@ -1,0 +1,84 @@
+{
+  "id": "ytmusic",
+  "name": "YouTube Music",
+  "version": "0.1.0",
+  "author": "NZJ-Jimmy",
+  "description": "Search, browse and listen to YouTube Music in YesPlayMusic.",
+  "repository": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic",
+  "minAppVersion": "3.0.0",
+  "main": "index.js",
+  "icon": "icon.png",
+  "playback": "stream",
+  "permissions": {
+    "network": [
+      "music.youtube.com",
+      "www.youtube.com",
+      "youtubei.googleapis.com",
+      "*.googlevideo.com"
+    ],
+    "process": ["yt-dlp"]
+  },
+  "settings": [
+    {
+      "key": "cookie",
+      "label": "Cookie",
+      "type": "password",
+      "help": "Optional. Paste the Cookie header from music.youtube.com to sign in on Windows/Linux and sync your library, liked songs and playlists.",
+      "link": "https://music.youtube.com/"
+    },
+    {
+      "key": "streamMode",
+      "label": "Stream Resolver",
+      "type": "select",
+      "options": [
+        { "value": "", "label": "Auto (yt-dlp preferred, InnerTube fallback)" },
+        { "value": "ytdlp", "label": "yt-dlp only" },
+        { "value": "innertube", "label": "Direct InnerTube only" }
+      ],
+      "help": "yt-dlp is recommended for reliable playback. Enable 'Allow running local programs' in the plugin menu after installing yt-dlp."
+    },
+    {
+      "key": "cookiesFromBrowser",
+      "label": "yt-dlp Browser Cookies",
+      "type": "select",
+      "options": [
+        { "value": "", "label": "Disabled" },
+        { "value": "chrome", "label": "Chrome" },
+        { "value": "edge", "label": "Microsoft Edge" },
+        { "value": "firefox", "label": "Firefox" },
+        { "value": "safari", "label": "Safari" },
+        { "value": "brave", "label": "Brave" }
+      ],
+      "help": "Pass --cookies-from-browser to yt-dlp to avoid bot checks or unlock Premium 256kbps audio."
+    },
+    {
+      "key": "region",
+      "label": "Content Region",
+      "type": "select",
+      "options": [
+        { "value": "", "label": "Default (US)" },
+        { "value": "US", "label": "United States (US)" },
+        { "value": "TW", "label": "Taiwan (TW)" },
+        { "value": "HK", "label": "Hong Kong (HK)" },
+        { "value": "JP", "label": "Japan (JP)" },
+        { "value": "KR", "label": "South Korea (KR)" },
+        { "value": "GB", "label": "United Kingdom (GB)" },
+        { "value": "SG", "label": "Singapore (SG)" }
+      ],
+      "help": "Affects recommendations, explore shelves and charts."
+    },
+    {
+      "key": "includeVideos",
+      "label": "Include Music Videos in Song Search",
+      "type": "boolean",
+      "help": "When enabled, song searches also supplement results with YouTube music videos if few official songs match."
+    }
+  ],
+  "navigation": [
+    { "builtin": "home" },
+    { "builtin": "liked" },
+    { "builtin": "savedAlbums" },
+    { "title": "Explore", "page": "explore" },
+    { "title": "Charts", "page": "charts" }
+  ]
+}
