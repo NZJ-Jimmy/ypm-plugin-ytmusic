@@ -37,13 +37,20 @@ YouTube enforces JS challenge / PO token checks on raw audio streams, so install
 2. In YesPlayMusic **Settings → Plugins**, open the `⋯` menu on the **YouTube Music** card and enable **"Allow running local programs"**.
 3. *(Optional)* If you encounter YouTube bot checks or want YouTube Music Premium 256kbps audio, select your browser under **yt-dlp Browser Cookies** in plugin settings.
 
-## Optional Account Sign-In
+## Optional Account Sign-In & How to Get Cookies
 
-- **macOS**: Click **Sign In** on the YouTube Music source to sign in through the built-in browser window.
-- **Windows / Linux**:
-  1. Open [music.youtube.com](https://music.youtube.com/) in your browser and sign in.
-  2. Open DevTools → Network → select any `youtubei/v1/` request → copy the `Cookie` request header.
-  3. Paste it into **Settings → Plugins → YouTube Music → Settings → Cookie** and click **Test Connection**.
+> Searching, browsing, lyrics, radio, and playback work without signing in. Signing in unlocks Liked Music, Saved Albums, Playlist CRUD, and personalized Home recommendations.
+
+- **macOS**: Click **Sign In** on the YouTube Music source to sign in via the built-in browser window.
+- **Windows / Linux (Step-by-step Cookie Guide)**:
+  1. Open [https://music.youtube.com](https://music.youtube.com/) in Chrome / Edge / Firefox and sign in to your Google account.
+  2. Press `F12` to open DevTools, switch to the **Network** tab, and filter by **Fetch/XHR**.
+  3. Click **Home** or **Explore** on the page (or type `browse` in the filter box), then click any `browse?prettyPrint=false` POST request.
+  4. Open the **Headers** tab → scroll down to **Request Headers** → find the **`cookie`** header.
+  5. Right-click its value and choose **Copy value** (make sure it does not include the `cookie:` prefix, and contains `SAPISID=` or `__Secure-3PAPISID=`).
+  6. In YesPlayMusic, open **Settings → Plugins → YouTube Music → Settings**, paste it into **Cookie**, save, and click **Test Connection** — seeing `Signed in as: <your name>` confirms it works.
+
+> Note: Keep your Cookie private and never share it publicly. If it expires later, simply repeat the steps above.
 
 ## Development & Testing
 

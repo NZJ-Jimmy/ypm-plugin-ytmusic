@@ -40,13 +40,20 @@
 2. 在 YesPlayMusic **设置 → 插件** 中，点击 **YouTube Music** 卡片右上角 `⋯` 菜单，勾选 **「允许运行本机程序」**。
 3. *（可选）* 如遇 YouTube Bot 校验或需要解锁 Premium 高音质，可在插件设置的 **「yt-dlp 浏览器 Cookie」** 中选择已登录 YouTube 的浏览器。
 
-## 可选账号登录
+## 可选账号登录与 Cookie 获取教程
+
+> 不登录也可以正常使用搜索、浏览、电台、歌词与播放；登录账号后可解锁「我喜欢的音乐」「收藏专辑」「个人歌单管理」以及个性化首页推荐。
 
 - **macOS**：直接点击登录按钮，在应用内置浏览器窗口登录 Google 账号即可。
-- **Windows / Linux**：
-  1. 在浏览器打开 [music.youtube.com](https://music.youtube.com/) 并登录账号。
-  2. 打开开发者工具（F12）→ Network → 找到任意 `youtubei/v1/` 请求 → 复制请求头中的 `Cookie` 完整值。
-  3. 粘贴到 **设置 → 插件 → YouTube Music → 设置 → Cookie** 中，点击「测试连接」验证。
+- **Windows / Linux（手动获取 Cookie 详细步骤）**：
+  1. 使用 Chrome / Edge / Firefox 打开 [https://music.youtube.com](https://music.youtube.com/) 并确认已登录你的 Google 账号。
+  2. 按 `F12` 打开浏览器开发者工具，切换到 **网络（Network）** 面板，勾选 **Fetch/XHR** 过滤器。
+  3. 在网页中随便点一下「首页」或「探索」（或在筛选框输入 `browse`），列表里会出现一条类似 `browse?prettyPrint=false` 的 POST 请求。
+  4. 点击该请求 → 右侧选择 **标头（Headers）** → 向下滚动找到 **请求标头（Request Headers）** 中的 **`cookie:`** 这一整行。
+  5. **右键该值 → 复制值（Copy value）**（注意只复制值，不要包含开头的 `cookie:` 字样；确认内容里包含 `SAPISID=...` 或 `__Secure-3PAPISID=...`）。
+  6. 回到 YesPlayMusic → **设置 → 插件 → YouTube Music → 设置**，粘贴到 **Cookie** 输入框并保存，点击 **「测试连接」** 若提示 `已登录账号: <你的名字>` 即表示成功。
+
+> 提示：Cookie 属于你的个人登录凭证，请勿分享给他人或提交到公开仓库。如果后续提示 Cookie 过期，按上述步骤重新复制一次即可。
 
 ## 开发与测试
 

@@ -338,7 +338,8 @@ export async function artist({ id }) {
   const following = Boolean(hdr.subscriptionButton?.subscribeButtonRenderer?.subscribed);
 
   const rawSections = getBrowseSections(data);
-  const tracks = [];
+  let tracks = [];
+  let topSongsBrowseId = "";
   const albums = [];
   const related = [];
   const seenAlbums = new Set();
@@ -346,6 +347,9 @@ export async function artist({ id }) {
 
   for (const raw of rawSections) {
     if (raw?.musicShelfRenderer) {
+      if (!topSongsBrowseId) {
+        topSongsBrowseId = extractBrowseId(raw.musicShelfRenderer.bottomEndpoint);
+      }
       for (const entry of raw.musicShelfRenderer.contents || []) {
         const tr = parseTrackFromResponsiveItem(entry?.musicResponsiveListItemRenderer);
         if (tr) tracks.push(tr);
@@ -367,6 +371,36 @@ export async function artist({ id }) {
           related.push(parsed.item);
         }
       }
+    }
+  }
+
+  // Enrich artist top songs with durations (and more top tracks) from the top-songs playlist.
+  if (topSongsBrowseId) {
+    try {
+      const topData = await ytmPost("browse", { browseId: normalizePlaylistBrowseId(topSongsBrowseId) });
+      const topSections =
+        topData?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents ||
+        topData?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer
+          ?.contents ||
+        [];
+      const topShelf = topSections.find((s) => s?.musicPlaylistShelfRenderer || s?.musicShelfRenderer);
+      const topItems = (topShelf?.musicPlaylistShelfRenderer || topShelf?.musicShelfRenderer)?.contents || [];
+      if (topItems.length) {
+        const initialById = new Map(tracks.map((tr) => [tr.id, tr]));
+        const enriched = [];
+        for (const entry of topItems.slice(0, 50)) {
+          const tr = parseTrackFromResponsiveItem(entry?.musicResponsiveListItemRenderer);
+          if (!tr) continue;
+          const orig = initialById.get(tr.id);
+          if (orig?.album?.name && !tr.album?.name) {
+            tr.album = { ...orig.album, imageUrl: tr.album?.imageUrl || orig.album.imageUrl };
+          }
+          enriched.push(tr);
+        }
+        if (enriched.length) tracks = enriched;
+      }
+    } catch {
+      // Keep initial top songs if playlist fetch fails.
     }
   }
 

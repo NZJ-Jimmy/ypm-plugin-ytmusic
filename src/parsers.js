@@ -176,13 +176,18 @@ export function parseTrackFromResponsiveItem(item, fallbackAlbum) {
   const name = runsText({ runs: titleRuns }).trim();
   if (!name) return null;
 
-  const subRuns = [...getFlexRuns(item, 1), ...getFlexRuns(item, 2)];
+  const subRuns = [];
+  for (let i = 1; i < (item.flexColumns?.length || 0); i++) {
+    subRuns.push(...getFlexRuns(item, i));
+  }
   const { artists, album, duration: subDur } = extractArtistsAndAlbumFromRuns(subRuns);
 
   let duration = subDur;
   if (!duration) {
-    const fixedText = runsText({ runs: getFixedRuns(item, 0) });
-    duration = parseDurationMs(fixedText);
+    for (let i = 0; i < (item.fixedColumns?.length || 0); i++) {
+      duration = parseDurationMs(runsText({ runs: getFixedRuns(item, i) }));
+      if (duration > 0) break;
+    }
   }
 
   const thumb = bestThumbnail(item.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails, 544);
