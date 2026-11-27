@@ -10,7 +10,7 @@ A **YouTube Music** source plugin for [YesPlayMusic 3.0+](https://github.com/qie
   - Search songs, albums, artists, and community playlists (with pagination & search suggestions)
   - Home recommendations, Explore (new releases, moods & genres), and Charts
   - Full Album, Artist (top songs, albums, singles/EPs, related artists), and Playlist pages
-  - Lyrics (synced timed lyrics when available, plus plain lyrics)
+  - Multi-source synced lyrics (inspired by InnerTune / OuterTune: uses YouTube Music official timed lyrics and automatically falls back to **LRCLIB** and **KuGou** for scrolling time-synced lyrics; provider priority is configurable in plugin settings)
   - Similar tracks, Quick Radio, and right-click **Start Radio** / **Copy YouTube Music Link**
 - **Optional Account Sign-In**:
   - Sign in via embedded browser window on macOS, or paste your `music.youtube.com` Cookie in settings on Windows/Linux
@@ -61,6 +61,12 @@ npm test
 # Run live integration test against music.youtube.com
 npm run test:live
 ```
+
+## Disclaimer
+
+- This project is an **unofficial**, independent third-party plugin and is **not affiliated with, endorsed by, sponsored by, or connected to YouTube, YouTube Music, Google LLC, LRCLIB, KuGou, or YesPlayMusic**.
+- All product names, logos, and trademarks are the property of their respective owners.
+- This plugin does not host, store, or distribute any copyrighted audio or lyrics; it is intended for personal and educational use only. Please comply with applicable laws and the terms of service of the respective platforms.
 
 ## License
 

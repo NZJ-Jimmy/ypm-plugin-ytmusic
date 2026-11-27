@@ -6,6 +6,7 @@ import { createMockHost } from "./mock-host.mjs";
 globalThis.host = createMockHost({ language: "zh-CN", settings: { region: "US" } });
 
 const plugin = await import("../index.js");
+const { fetchLrcLibLyrics, fetchKuGouLyrics } = await import("../src/lyrics.js");
 
 async function step(name, fn) {
   const t0 = Date.now();
@@ -87,12 +88,24 @@ async function main() {
   assert.ok(playlistDetail.name && playlistDetail.tracks.length > 0);
   console.log(`  -> playlist "${playlistDetail.name}": ${playlistDetail.tracks.length} tracks`);
 
-  // 7. lyrics / similar / station
+  // 7. lyrics (YT Music + LRCLIB + KuGou) / similar / station
   const lyr = await step("lyrics()", () => plugin.lyrics({ id: sampleTrack.id }));
   assert.ok(lyr.lines?.length > 0, "Expected lyrics lines");
   const timedCount = lyr.lines.filter((l) => l.start > 0 && l.start < 3600000).length;
   assert.ok(timedCount > 5, `Expected synced timed lyrics, got timedCount=${timedCount}`);
   console.log(`  -> lyrics lines: ${lyr.lines.length} (synced: ${timedCount}, first timed: ${lyr.lines[1]?.start}ms "${lyr.lines[1]?.text}")`);
+
+  const lrcLib = await step("fetchLrcLibLyrics()", () =>
+    fetchLrcLibLyrics({ title: "晴天", artist: "周杰伦", durationMs: 269000 }),
+  );
+  assert.ok(lrcLib.synced?.length > 5, "Expected synced lyrics from LRCLIB");
+  console.log(`  -> LRCLIB synced lines: ${lrcLib.synced.length}`);
+
+  const kugou = await step("fetchKuGouLyrics()", () =>
+    fetchKuGouLyrics({ title: "晴天", artist: "周杰伦", durationMs: 269000 }),
+  );
+  assert.ok(kugou?.length > 5, "Expected synced lyrics from KuGou");
+  console.log(`  -> KuGou synced lines: ${kugou.length}`);
 
   const sim = await step("similar()", () => plugin.similar({ id: sampleTrack.id }));
   assert.ok(sim.length > 0);

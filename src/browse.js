@@ -5,7 +5,6 @@ import {
   clearContinuations,
   getContinuation,
   saveContinuation,
-  ytmAndroidPost,
   ytmPost,
 } from "./innertube.js";
 import {
@@ -499,94 +498,7 @@ export async function playlist({ id }) {
   };
 }
 
-export function findTimedLyricsData(node, depth = 0) {
-  if (!node || typeof node !== "object" || depth > 20) return null;
-  if (Array.isArray(node.timedLyricsData) && node.timedLyricsData.length) {
-    return node.timedLyricsData;
-  }
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      const found = findTimedLyricsData(item, depth + 1);
-      if (found) return found;
-    }
-    return null;
-  }
-  for (const val of Object.values(node)) {
-    if (val && typeof val === "object") {
-      const found = findTimedLyricsData(val, depth + 1);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-export function parseTimedLyrics(timed) {
-  if (!Array.isArray(timed) || !timed.length) return [];
-  const lines = [];
-  for (const entry of timed) {
-    const rawStart = entry?.cueRange?.startTimeMilliseconds;
-    const start = Number(rawStart);
-    if (!Number.isFinite(start) || start < 0) continue;
-    const rawEnd = Number(entry?.cueRange?.endTimeMilliseconds);
-    const end = Number.isFinite(rawEnd) && rawEnd > start ? rawEnd : undefined;
-    const text = String(entry?.lyricLine ?? "").trim();
-    lines.push({ start, ...(end !== undefined ? { end } : {}), text });
-  }
-  lines.sort((a, b) => a.start - b.start);
-  return lines;
-}
-
-export function parsePlainLyrics(text) {
-  const rows = String(text || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line, idx, arr) => line.length > 0 || (idx > 0 && idx < arr.length - 1));
-  if (!rows.length) return [];
-  // Keep only the first line at start=0; setting all untimed lines to start=0 causes
-  // YesPlayMusic's binary-search lineAt() to jump immediately to the very last line.
-  const UNTIMED_FUTURE_MS = 24 * 60 * 60 * 1000;
-  return rows.map((line, i) => ({ start: i === 0 ? 0 : UNTIMED_FUTURE_MS, text: line }));
-}
-
-export async function lyrics({ id }) {
-  const nextData = await ytmPost("next", { videoId: String(id), isAudioOnly: true });
-  const tabs =
-    nextData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer
-      ?.tabs || [];
-
-  let lyricsBrowseId = "";
-  for (const tab of tabs) {
-    const bid = extractBrowseId(tab?.tabRenderer?.endpoint);
-    if (bid && bid.startsWith("MPLYt_")) {
-      lyricsBrowseId = bid;
-      break;
-    }
-  }
-  if (!lyricsBrowseId) return {};
-
-  // 1. Prefer ANDROID_MUSIC browse, which returns official millisecond-synced timedLyricsData.
-  try {
-    const androidData = await ytmAndroidPost("browse", { browseId: lyricsBrowseId });
-    const timed = findTimedLyricsData(androidData);
-    const syncedLines = parseTimedLyrics(timed);
-    if (syncedLines.length) return { lines: syncedLines };
-  } catch {
-    // Fall back to WEB_REMIX lyrics below.
-  }
-
-  // 2. Fallback: WEB_REMIX browse (timed if available, otherwise untimed plain lyrics).
-  const lyrData = await ytmPost("browse", { browseId: lyricsBrowseId });
-  const webTimed = findTimedLyricsData(lyrData);
-  const webSyncedLines = parseTimedLyrics(webTimed);
-  if (webSyncedLines.length) return { lines: webSyncedLines };
-
-  const desc =
-    lyrData?.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.description;
-  const text = runsText(desc).trim();
-  if (!text) return {};
-
-  return { lines: parsePlainLyrics(text) };
-}
+export { findTimedLyricsData, lyrics, parsePlainLyrics, parseTimedLyrics } from "./lyrics.js";
 
 async function fetchRadioQueue(videoId) {
   const data = await ytmPost("next", {

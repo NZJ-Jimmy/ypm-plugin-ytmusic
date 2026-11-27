@@ -1,7 +1,7 @@
 {
   "id": "ytmusic",
   "name": "YouTube Music",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "NZJ-Jimmy",
   "description": "Search, browse and listen to YouTube Music in YesPlayMusic.",
   "repository": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic",
@@ -14,7 +14,9 @@
       "music.youtube.com",
       "www.youtube.com",
       "youtubei.googleapis.com",
-      "*.googlevideo.com"
+      "*.googlevideo.com",
+      "lrclib.net",
+      "lyrics.kugou.com"
     ],
     "process": ["yt-dlp"]
   },
@@ -72,6 +74,18 @@
       "label": "Include Music Videos in Song Search",
       "type": "boolean",
       "help": "When enabled, song searches also supplement results with YouTube music videos if few official songs match."
+    },
+    {
+      "key": "lyricsProvider",
+      "label": "Synced Lyrics Source",
+      "type": "select",
+      "options": [
+        { "value": "", "label": "Auto (YouTube Music → LRCLIB → KuGou)" },
+        { "value": "lrclib", "label": "LRCLIB first (LRCLIB → KuGou → YouTube Music)" },
+        { "value": "kugou", "label": "KuGou first (KuGou → LRCLIB → YouTube Music)" },
+        { "value": "ytmusic", "label": "YouTube Music only" }
+      ],
+      "help": "Fallback to LRCLIB and KuGou (like InnerTune / OuterTune) when YouTube Music lacks time-synced lyrics."
     },
     {
       "key": "github",

@@ -9,7 +9,19 @@ const { sha1Hex } = await import("../src/sha1.js");
 const { buildAuthHeaders, toNetscapeCookies, signIn, MACOS_SAFARI_UA, GOOGLE_YTM_SIGNIN_URL } = await import(
   "../src/auth.js"
 );
-const { findTimedLyricsData, parseTimedLyrics, parsePlainLyrics } = await import("../src/browse.js");
+const {
+  findTimedLyricsData,
+  parseTimedLyrics,
+  parsePlainLyrics,
+  parseLrc,
+  decodeBase64Utf8,
+  cleanTrackTitle,
+  cleanArtistName,
+  pickBestLrcLibCandidate,
+  pickBestKuGouCandidate,
+  resolveProviderOrder,
+  lyrics,
+} = await import("../src/lyrics.js");
 const {
   bestThumbnail,
   parseDurationMs,
@@ -287,4 +299,150 @@ test("findTimedLyricsData, parseTimedLyrics, and parsePlainLyrics handle synced 
   assert.equal(plain[0].start, 0);
   assert.ok(plain[1].start > 60 * 60 * 1000);
   assert.ok(plain[2].start > 60 * 60 * 1000);
+});
+
+test("decodeBase64Utf8 decodes ASCII, CJK, and multi-byte UTF-8 without Buffer/atob", () => {
+  const sample = "\uFEFF[00:12.34]故事的小黄花 🎵\n[00:16.50]Hello World";
+  const b64 = Buffer.from(sample, "utf8").toString("base64");
+  assert.equal(decodeBase64Utf8(b64), sample);
+});
+
+test("parseLrc parses timestamps, multi-timestamps, offsets, and skips metadata tags", () => {
+  const lrc = [
+    "\uFEFF[ar:周杰伦]",
+    "[ti:晴天]",
+    "[offset:500]",
+    "[00:01.00]第一句",
+    "[00:05.25][01:05.500]重复副歌",
+    "[00:10.5]第三句",
+  ].join("\n");
+
+  const lines = parseLrc(lrc);
+  assert.deepEqual(lines, [
+    { start: 500, text: "第一句" },
+    { start: 4750, text: "重复副歌" },
+    { start: 10000, text: "第三句" },
+    { start: 65000, text: "重复副歌" },
+  ]);
+});
+
+test("cleanTrackTitle, cleanArtistName, candidate scoring, and provider order", () => {
+  assert.equal(cleanTrackTitle("晴天 (Official Music Video) [HD]"), "晴天");
+  assert.equal(cleanTrackTitle("Song Name (feat. Someone)"), "Song Name");
+  assert.equal(cleanArtistName("Jay Chou - Topic"), "Jay Chou");
+
+  assert.deepEqual(resolveProviderOrder(""), ["ytmusic", "lrclib", "kugou"]);
+  assert.deepEqual(resolveProviderOrder("lrclib"), ["lrclib", "kugou", "ytmusic"]);
+  assert.deepEqual(resolveProviderOrder("kugou"), ["kugou", "lrclib", "ytmusic"]);
+  assert.deepEqual(resolveProviderOrder("ytmusic"), ["ytmusic"]);
+
+  const lrcBest = pickBestLrcLibCandidate(
+    [
+      { trackName: "晴天", artistName: "周杰伦", duration: 120, syncedLyrics: "[00:01.00]wrong" },
+      { trackName: "晴天", artistName: "周杰伦", duration: 270, syncedLyrics: "[00:01.00]right" },
+    ],
+    { title: "晴天", artist: "周杰伦", durationMs: 269000 },
+  );
+  assert.equal(lrcBest.duration, 270);
+
+  const kgBest = pickBestKuGouCandidate(
+    [
+      { id: "1", accesskey: "a", song: "晴天", singer: "周杰伦", duration: 269000, score: 60 },
+      { id: "2", accesskey: "b", song: "晴天", singer: "翻唱", duration: 200000, score: 80 },
+    ],
+    { title: "晴天", artist: "周杰伦", durationMs: 269000 },
+  );
+  assert.equal(kgBest.id, "1");
+});
+
+test("lyrics() falls back from YT Music to LRCLIB and KuGou when YT Music has no timed lyrics", async () => {
+  const sampleNext = {
+    contents: {
+      singleColumnMusicWatchNextResultsRenderer: {
+        tabbedRenderer: {
+          watchNextTabbedResultsRenderer: {
+            tabs: [
+              {
+                tabRenderer: {
+                  content: {
+                    musicQueueRenderer: {
+                      content: {
+                        playlistPanelRenderer: {
+                          contents: [
+                            {
+                              playlistPanelVideoRenderer: {
+                                videoId: "vid12345678",
+                                title: { runs: [{ text: "晴天 (Official Audio)" }] },
+                                lengthText: { runs: [{ text: "4:29" }] },
+                                longBylineText: {
+                                  runs: [{ text: "周杰伦", navigationEndpoint: { browseEndpoint: { browseId: "UC1" } } }],
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                tabRenderer: {
+                  endpoint: { browseEndpoint: { browseId: "MPLYt_test" } },
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+  };
+
+  const kgLrcB64 = Buffer.from("[00:02.00]酷狗第一句\n[00:06.50]酷狗第二句", "utf8").toString("base64");
+  const calledUrls = [];
+  const origFetch = globalThis.fetch;
+
+  globalThis.host = createMockHost({ settings: { lyricsProvider: "" } });
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    calledUrls.push(u);
+    const jsonRes = (obj, status = 200) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => obj,
+    });
+    if (u.includes("/youtubei/v1/next")) return jsonRes(sampleNext);
+    if (u.includes("/youtubei/v1/browse")) {
+      // YT Music has only unsynced plain lyrics
+      return jsonRes({
+        contents: {
+          sectionListRenderer: {
+            contents: [{ musicDescriptionShelfRenderer: { description: { runs: [{ text: "Plain only" }] } } }],
+          },
+        },
+      });
+    }
+    if (u.includes("lrclib.net")) return jsonRes({}, 404);
+    if (u.includes("lyrics.kugou.com/search")) {
+      return jsonRes({
+        candidates: [{ id: "99", accesskey: "key99", song: "晴天", singer: "周杰伦", duration: 269000, score: 60 }],
+      });
+    }
+    if (u.includes("lyrics.kugou.com/download")) {
+      return jsonRes({ content: kgLrcB64 });
+    }
+    return jsonRes({}, 404);
+  };
+
+  try {
+    const res = await lyrics({ id: "vid12345678" });
+    assert.deepEqual(res.lines, [
+      { start: 2000, text: "酷狗第一句" },
+      { start: 6500, text: "酷狗第二句" },
+    ]);
+    assert.ok(calledUrls.some((u) => u.includes("lrclib.net")));
+    assert.ok(calledUrls.some((u) => u.includes("lyrics.kugou.com/download")));
+  } finally {
+    globalThis.fetch = origFetch;
+  }
 });
