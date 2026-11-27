@@ -35,7 +35,7 @@ const {
   decodeBrowsePage,
 } = await import("../src/parsers.js");
 const { stream, mapAudioType, pickAudioFormat } = await import("../src/stream.js");
-const { trackMenu, menuAction } = await import("../src/library.js");
+const { trackMenu, menuAction, savedAlbums } = await import("../src/library.js");
 
 test("sha1Hex matches FIPS 180-4 test vectors", () => {
   assert.equal(sha1Hex(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709");
@@ -237,6 +237,66 @@ test("pickAudioFormat & mapAudioType & trackMenu/menuAction", async () => {
   assert.deepEqual(radioRes, { station: { id: "radio", seed: "SJKoWAd5ySo" } });
   const copyRes = await menuAction({ id: "copyLink", track: { id: "SJKoWAd5ySo" } });
   assert.equal(copyRes.copy, "https://music.youtube.com/watch?v=SJKoWAd5ySo");
+});
+
+test("savedAlbums returns a plain Album[] array for compatibility with all YesPlayMusic 3.0+ builds", async () => {
+  const origFetch = globalThis.fetch;
+  globalThis.host = createMockHost({ settings: { cookie: "SID=a; SAPISID=b" } });
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      contents: {
+        singleColumnBrowseResultsRenderer: {
+          tabs: [
+            {
+              tabRenderer: {
+                content: {
+                  sectionListRenderer: {
+                    contents: [
+                      {
+                        gridRenderer: {
+                          items: [
+                            {
+                              musicTwoRowItemRenderer: {
+                                title: { runs: [{ text: "葉惠美" }] },
+                                subtitle: { runs: [{ text: "专辑" }, { text: " • " }, { text: "周杰倫" }] },
+                                navigationEndpoint: {
+                                  browseEndpoint: {
+                                    browseId: "MPREb_nqKuADavt3c",
+                                    browseEndpointContextSupportedConfigs: {
+                                      browseEndpointContextMusicConfig: { pageType: "MUSIC_PAGE_TYPE_ALBUM" },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    }),
+  });
+
+  try {
+    const res = await savedAlbums({ offset: 0 });
+    assert.ok(Array.isArray(res), "savedAlbums() must return an Array");
+    assert.equal(res.length, 1);
+    assert.equal(res[0].id, "MPREb_nqKuADavt3c");
+    assert.equal(res[0].saved, true);
+
+    const page2 = await savedAlbums({ offset: 20 });
+    assert.deepEqual(page2, []);
+  } finally {
+    globalThis.fetch = origFetch;
+  }
 });
 
 test("macOS signIn passes desktop Safari userAgent and Google YouTube login URL to host.webSignIn", async () => {

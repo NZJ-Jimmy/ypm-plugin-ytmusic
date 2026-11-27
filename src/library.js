@@ -102,7 +102,7 @@ export async function like({ id, on }) {
 
 export async function savedAlbums({ offset = 0 } = {}) {
   requireSignedIn();
-  if (offset > 0) return { albums: [], more: false };
+  if (offset > 0) return [];
 
   const data = await ytmPost("browse", { browseId: "FEmusic_liked_albums" }, { requireAuth: true });
   const albums = [];
@@ -131,7 +131,7 @@ export async function savedAlbums({ offset = 0 } = {}) {
     }
   }
 
-  return { albums, more: false };
+  return albums;
 }
 
 export async function saveAlbum({ id, on }) {
