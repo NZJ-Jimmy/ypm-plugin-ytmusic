@@ -11,6 +11,8 @@ export const MACOS_SAFARI_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15";
 export const GOOGLE_YTM_SIGNIN_URL =
   "https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26next%3Dhttps%253A%252F%252Fmusic.youtube.com%252F";
+export const COOKIE_GUIDE_URL =
+  "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic/blob/main/README.zh-CN.md#%E5%8F%AF%E9%80%89%E8%B4%A6%E5%8F%B7%E7%99%BB%E5%BD%95%E4%B8%8E-cookie-%E8%8E%B7%E5%8F%96%E6%95%99%E7%A8%8B";
 
 export function t(text) {
   return typeof host !== "undefined" && host?.t ? host.t(text) : text;
@@ -150,7 +152,12 @@ export async function signIn() {
     return info;
   }
 
-  // 3. On Windows / Linux, guide user to paste Cookie in plugin settings.
+  // 3. On Windows / Linux, open the Cookie tutorial and guide user to paste Cookie in settings.
+  try {
+    host.openURL?.(COOKIE_GUIDE_URL);
+  } catch {
+    // Ignore if openURL fails.
+  }
   throw fail(
     "setup",
     t(

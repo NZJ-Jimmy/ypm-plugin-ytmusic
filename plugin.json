@@ -23,8 +23,8 @@
       "key": "cookie",
       "label": "Cookie",
       "type": "password",
-      "help": "Optional. Paste the Cookie header from music.youtube.com to sign in on Windows/Linux and sync your library, liked songs and playlists.",
-      "link": "https://music.youtube.com/"
+      "help": "Optional. Click 'Get' to open the step-by-step Cookie guide (with music.youtube.com link) to sign in on Windows/Linux and sync your library, liked songs and playlists.",
+      "link": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic/blob/main/README.zh-CN.md#%E5%8F%AF%E9%80%89%E8%B4%A6%E5%8F%B7%E7%99%BB%E5%BD%95%E4%B8%8E-cookie-%E8%8E%B7%E5%8F%96%E6%95%99%E7%A8%8B"
     },
     {
       "key": "streamMode",
@@ -72,6 +72,14 @@
       "label": "Include Music Videos in Song Search",
       "type": "boolean",
       "help": "When enabled, song searches also supplement results with YouTube music videos if few official songs match."
+    },
+    {
+      "key": "github",
+      "label": "GitHub Project (Star to support!)",
+      "type": "text",
+      "default": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic",
+      "link": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic",
+      "help": "If you find this plugin helpful, click 'Get' on the right to open the GitHub repository and give it a Star!"
     }
   ],
   "navigation": [

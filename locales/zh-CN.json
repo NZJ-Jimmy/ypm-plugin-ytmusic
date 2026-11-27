@@ -1,7 +1,9 @@
 {
   "Search, browse and listen to YouTube Music in YesPlayMusic.": "在 YesPlayMusic 中搜索、浏览并收听 YouTube Music 音乐。",
   "Cookie": "Cookie",
-  "Optional. Paste the Cookie header from music.youtube.com to sign in on Windows/Linux and sync your library, liked songs and playlists.": "可选。粘贴来自 music.youtube.com 的 Cookie 请求头，用于在 Windows/Linux 登录并同步个人曲库、喜欢的歌曲和歌单。",
+  "Optional. Click 'Get' to open the step-by-step Cookie guide (with music.youtube.com link) to sign in on Windows/Linux and sync your library, liked songs and playlists.": "可选。点击右上角「去获取」打开图文步骤教程（内含 music.youtube.com 链接），复制 Cookie 即可在 Windows/Linux 登录并同步喜欢的音乐与歌单。",
+  "GitHub Project (Star to support!)": "GitHub 项目地址（欢迎点 Star 支持 ⭐）",
+  "If you find this plugin helpful, click 'Get' on the right to open the GitHub repository and give it a Star!": "如果觉得这个插件好用，欢迎点击右上角「去获取」打开 GitHub 仓库点个 Star 支持作者，反馈问题也欢迎提 Issue！",
   "Stream Resolver": "音频流解析方式",
   "Auto (yt-dlp preferred, InnerTube fallback)": "自动（优先 yt-dlp，失败时回退直连）",
   "yt-dlp only": "仅使用 yt-dlp",
