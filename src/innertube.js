@@ -8,6 +8,8 @@ export const WEB_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36";
 
 const CLIENT_VERSION = "1.20260201.01.00";
+const ANDROID_MUSIC_VERSION = "8.10.52";
+const ANDROID_MUSIC_UA = `com.google.android.apps.youtube.music/${ANDROID_MUSIC_VERSION} (Linux; U; Android 14) gzip`;
 const VISITOR_KEY = "visitorData";
 const VISITOR_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -160,4 +162,35 @@ export async function ytmPost(
     setCachedVisitorData(nextVisitor);
   }
   return data;
+}
+
+export async function ytmAndroidPost(endpoint, payload = {}, { timeoutMs = 15000 } = {}) {
+  const visitorData = getCachedVisitorData();
+  const headers = {
+    "Content-Type": "application/json",
+    "User-Agent": ANDROID_MUSIC_UA,
+    "X-YouTube-Client-Name": "21",
+    "X-YouTube-Client-Version": ANDROID_MUSIC_VERSION,
+  };
+  if (visitorData) headers["X-Goog-Visitor-Id"] = visitorData;
+
+  const client = {
+    clientName: "ANDROID_MUSIC",
+    clientVersion: ANDROID_MUSIC_VERSION,
+    osName: "Android",
+    osVersion: "14",
+    androidSdkVersion: 34,
+    hl: resolveLanguage(),
+    gl: resolveRegion(),
+  };
+  if (visitorData) client.visitorData = visitorData;
+
+  const res = await fetch(`${YTM_ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ context: { client }, ...payload }),
+    signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(timeoutMs) : undefined,
+  });
+  if (!res.ok) throw new Error(`YouTube Music Android ${endpoint}: HTTP ${res.status}`);
+  return res.json();
 }

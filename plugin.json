@@ -1,7 +1,7 @@
 {
   "id": "ytmusic",
   "name": "YouTube Music",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "NZJ-Jimmy",
   "description": "Search, browse and listen to YouTube Music in YesPlayMusic.",
   "repository": "https://github.com/NZJ-Jimmy/ypm-plugin-ytmusic",

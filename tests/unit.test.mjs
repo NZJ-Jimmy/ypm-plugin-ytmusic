@@ -6,7 +6,10 @@ import { createMockHost } from "./mock-host.mjs";
 globalThis.host = createMockHost();
 
 const { sha1Hex } = await import("../src/sha1.js");
-const { buildAuthHeaders, toNetscapeCookies } = await import("../src/auth.js");
+const { buildAuthHeaders, toNetscapeCookies, signIn, MACOS_SAFARI_UA, GOOGLE_YTM_SIGNIN_URL } = await import(
+  "../src/auth.js"
+);
+const { findTimedLyricsData, parseTimedLyrics, parsePlainLyrics } = await import("../src/browse.js");
 const {
   bestThumbnail,
   parseDurationMs,
@@ -222,4 +225,66 @@ test("pickAudioFormat & mapAudioType & trackMenu/menuAction", async () => {
   assert.deepEqual(radioRes, { station: { id: "radio", seed: "SJKoWAd5ySo" } });
   const copyRes = await menuAction({ id: "copyLink", track: { id: "SJKoWAd5ySo" } });
   assert.equal(copyRes.copy, "https://music.youtube.com/watch?v=SJKoWAd5ySo");
+});
+
+test("macOS signIn passes desktop Safari userAgent and Google YouTube login URL to host.webSignIn", async () => {
+  let receivedOpts = null;
+  globalThis.host = createMockHost({
+    platform: "darwin",
+    webSignInImpl: async (opts) => {
+      receivedOpts = opts;
+      throw new Error("cancelled");
+    },
+  });
+
+  await assert.rejects(() => signIn(), /cancelled/);
+  assert.equal(receivedOpts.url, GOOGLE_YTM_SIGNIN_URL);
+  assert.equal(receivedOpts.cookiesOf, "https://music.youtube.com/");
+  assert.deepEqual(receivedOpts.until, ["SAPISID", "SID"]);
+  assert.equal(receivedOpts.userAgent, MACOS_SAFARI_UA);
+});
+
+test("findTimedLyricsData, parseTimedLyrics, and parsePlainLyrics handle synced and untimed lyrics", () => {
+  const nested = {
+    contents: {
+      elementRenderer: {
+        newElement: {
+          type: {
+            componentType: {
+              model: {
+                timedLyricsModel: {
+                  lyricsData: {
+                    timedLyricsData: [
+                      {
+                        lyricLine: "Line 2",
+                        cueRange: { startTimeMilliseconds: "36120", endTimeMilliseconds: "42000" },
+                      },
+                      {
+                        lyricLine: "Line 1",
+                        cueRange: { startTimeMilliseconds: "29250", endTimeMilliseconds: "36120" },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+  const raw = findTimedLyricsData(nested);
+  assert.equal(raw.length, 2);
+  const parsed = parseTimedLyrics(raw);
+  assert.deepEqual(parsed, [
+    { start: 29250, end: 36120, text: "Line 1" },
+    { start: 36120, end: 42000, text: "Line 2" },
+  ]);
+
+  const plain = parsePlainLyrics("First line\nSecond line\nThird line");
+  assert.equal(plain.length, 3);
+  assert.equal(plain[0].start, 0);
+  assert.ok(plain[1].start > 60 * 60 * 1000);
+  assert.ok(plain[2].start > 60 * 60 * 1000);
 });

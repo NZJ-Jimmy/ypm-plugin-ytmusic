@@ -1,6 +1,6 @@
 {
   "name": "ypm-plugin-ytmusic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "YouTube Music source plugin for YesPlayMusic 3.0+",

@@ -89,7 +89,10 @@ async function main() {
 
   // 7. lyrics / similar / station
   const lyr = await step("lyrics()", () => plugin.lyrics({ id: sampleTrack.id }));
-  console.log(`  -> lyrics lines: ${lyr.lines?.length || 0}`);
+  assert.ok(lyr.lines?.length > 0, "Expected lyrics lines");
+  const timedCount = lyr.lines.filter((l) => l.start > 0 && l.start < 3600000).length;
+  assert.ok(timedCount > 5, `Expected synced timed lyrics, got timedCount=${timedCount}`);
+  console.log(`  -> lyrics lines: ${lyr.lines.length} (synced: ${timedCount}, first timed: ${lyr.lines[1]?.start}ms "${lyr.lines[1]?.text}")`);
 
   const sim = await step("similar()", () => plugin.similar({ id: sampleTrack.id }));
   assert.ok(sim.length > 0);
